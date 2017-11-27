@@ -106,7 +106,7 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
             }
             self.write_message(json.dumps(msg))
         elif msg['type'] == 'COLLECTED':
-            if len(msg['data']) < 1:
+            if len(msg['data']) <= 1:
                 self.svm = None
             else:
                 self.trainSVM()
@@ -138,19 +138,6 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
         if d is None:
             self.svm = None
             return
-        if len(self.people) == 1:
-            a = []  # 存储人脸特征
-            b = []  # 存储人脸的名字
-            res = self.selectrep()
-            for element in res:
-                rep = self.convert_array(element[1])
-                a.append(rep)
-                b.append(element[0])
-            (X, y) = d
-            a = np.vstack(a)
-            b = np.array(b)
-            X = np.append(a, X)
-            y = np.append(b, y)
         else:
             (X, y) = d
         param_grid = [
@@ -263,6 +250,8 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
             right = (bb.right(), bb.top())
             if len(self.people) == 0:
                 name = "Unknown"
+            elif len(self.people) == 1:
+                name = self.people[0]
             elif self.svm:
                 newrep = rep.reshape(1, -1)
                 prediction = self.svm.predict_proba(newrep)[0]
@@ -295,15 +284,15 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
         plt.close()
         self.write_message(json.dumps(msg))
 
-    def selectrep(self):
-        con = sqlite3.connect('peopleface')
-        res = con.execute("SELECT * FROM bestwise").fetchall()
-        return res
-
-    def convert_array(self, text):
-        out = io.BytesIO(text)
-        out.seek(0)
-        return np.load(out)
+    # def selectrep(self):
+    #     con = sqlite3.connect('peopleface')
+    #     res = con.execute("SELECT * FROM bestwise").fetchall()
+    #     return res
+    #
+    # def convert_array(self, text):
+    #     out = io.BytesIO(text)
+    #     out.seek(0)
+    #     return np.load(out)
 
 
 def main():
