@@ -50,12 +50,15 @@ align = openface.AlignDlib(args.dlibFacePredictor)
 net = openface.TorchNeuralNet(args.networkModel, imgDim=args.imgDim,
                               cuda=args.cuda)
 
-
+class IndexHandler(web.RequestHandler):
+    def get(self):
+        self.render("index.html")
 
 class Application(tornado.web.Application):
     def __init__(self):
         handlers = [
             ('/soc', SocketHandler),
+            ('/', IndexHandler)
         ]
         settings = dict(
             # login_url = "/auth/login",
