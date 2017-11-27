@@ -50,7 +50,7 @@ align = openface.AlignDlib(args.dlibFacePredictor)
 net = openface.TorchNeuralNet(args.networkModel, imgDim=args.imgDim,
                               cuda=args.cuda)
 
-class IndexHandler(web.RequestHandler):
+class IndexHandler(tornado.web.RequestHandler):
     def get(self):
         self.render("index.html")
 
