@@ -279,25 +279,25 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
 
 
 def main():
-    # tornado.options.parse_command_line()
-    # ssl_options={
-    #    "certfile": "tls/server.crt",
-    #    "keyfile": "tls/server.key",
-    #}
-    #http_server = tornado.httpserver.HTTPServer(Application)
-
-    #http_server.listen(8080)  # xheaders=True为了可以获取到header信息
-    #print('listening on %s ...' % 8080)
-
-    #tornado.ioloop.IOLoop.current().start()
-    #tornado.ioloop.IOLoop.instance().start()
     tornado.options.parse_command_line()
-    http_server = Application()
+    ssl_options={
+       "certfile": "key/bestwise.crt",
+       "keyfile": "key/bestwise.rsa",
+    }
+    http_server = tornado.httpserver.HTTPServer(Application)
 
-    http_server.listen(8080, xheaders=True)  # xheaders=True为了可以获取到header信息
+    http_server.listen(8080)  # xheaders=True为了可以获取到header信息
     print('listening on %s ...' % 8080)
 
     tornado.ioloop.IOLoop.current().start()
+    tornado.ioloop.IOLoop.instance().start()
+    # tornado.options.parse_command_line()
+    # http_server = Application()
+
+    # http_server.listen(8080, xheaders=True)  # xheaders=True为了可以获取到header信息
+    # print('listening on %s ...' % 8080)
+
+    # tornado.ioloop.IOLoop.current().start()
 
 
 if __name__ == '__main__':
