@@ -22,7 +22,7 @@ import os
 import base64
 import urllib
 import matplotlib.pyplot as plt
-
+import sqlite3
 
 from sklearn.decomposition import PCA
 from sklearn.grid_search import GridSearchCV
@@ -50,9 +50,11 @@ align = openface.AlignDlib(args.dlibFacePredictor)
 net = openface.TorchNeuralNet(args.networkModel, imgDim=args.imgDim,
                               cuda=args.cuda)
 
+
 class IndexHandler(tornado.web.RequestHandler):
     def get(self):
         self.render("index.html")
+
 
 class Application(tornado.web.Application):
     def __init__(self):
@@ -104,7 +106,7 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
             }
             self.write_message(json.dumps(msg))
         elif msg['type'] == 'COLLECTED':
-            if len(msg['data']) <= 1:
+            if len(msg['data']) < 1:
                 self.svm = None
             else:
                 self.trainSVM()
@@ -136,16 +138,29 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
         if d is None:
             self.svm = None
             return
+        if len(self.people) == 1:
+            a = []  # 存储人脸特征
+            b = []  # 存储人脸的名字
+            res = self.selectrep()
+            for element in res:
+                rep = self.convert_array(element[1])
+                a.append(rep)
+                b.append(element[0])
+            (X, y) = d
+            a = np.vstack(a)
+            b = np.array(b)
+            X = np.append(a, X)
+            y = np.append(b, y)
         else:
             (X, y) = d
-            param_grid = [
-                {'C': [1, 10, 100, 1000],
-                 'kernel': ['linear']},
-                {'C': [1, 10, 100, 1000],
-                 'gamma': [0.001, 0.0001],
-                 'kernel': ['rbf']}
-            ]
-            self.svm = GridSearchCV(SVC(C=1), param_grid, cv=5).fit(X, y)
+        param_grid = [
+            {'C': [1, 10, 100, 1000],
+             'kernel': ['linear']},
+            {'C': [1, 10, 100, 1000],
+             'gamma': [0.001, 0.0001],
+             'kernel': ['rbf']}
+        ]
+        self.svm = GridSearchCV(SVC(C=1, probability=True), param_grid, cv=5).fit(X, y)
 
     def collectfeature(self, dataURL, identity):
         head = "data:image/jpeg;base64,"
@@ -248,10 +263,13 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
             right = (bb.right(), bb.top())
             if len(self.people) == 0:
                 name = "Unknown"
-            elif len(self.people) == 1:
-                name = self.people[0]
             elif self.svm:
-                name = self.svm.predict(rep.reshape(1, -1))[0]
+                newrep = rep.reshape(1, -1)
+                prediction = self.svm.predict_proba(newrep)[0]
+                if np.max(prediction) < 0.5:
+                    name = "Unknown"
+                else:
+                    name = self.svm.predict(newrep)[0]
             else:
                 print "hehehe"
                 name = "Unknown"
@@ -260,9 +278,6 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
             cv2.putText(annotatedFrame, name, (bb.left(), bb.top() - 10),
                         cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.75,
                         color=(65, 189, 214), thickness=2)
-        # cv2.imwrite('1.png', annotatedFrame)
-        # resized = cv2.resize(annotatedFrame, (460, 360), interpolation=cv2.INTER_AREA)
-        # cv2.imwrite('2.png', resized)
         plt.figure()
         plt.imshow(annotatedFrame)
         plt.xticks([])
@@ -279,6 +294,16 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
         }
         plt.close()
         self.write_message(json.dumps(msg))
+
+    def selectrep(self):
+        con = sqlite3.connect('peopleface')
+        res = con.execute("SELECT * FROM bestwise").fetchall()
+        return res
+
+    def convert_array(self, text):
+        out = io.BytesIO(text)
+        out.seek(0)
+        return np.load(out)
 
 
 def main():
