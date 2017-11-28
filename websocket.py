@@ -106,7 +106,7 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
             }
             self.write_message(json.dumps(msg))
         elif msg['type'] == 'COLLECTED':
-            if len(msg['data']) <= 1:
+            if len(msg['data']) < 1:
                 self.svm = None
             else:
                 self.trainSVM()
@@ -138,6 +138,19 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
         if d is None:
             self.svm = None
             return
+        elif len(self.people) == 1:
+            a = []  # 存储人脸特征
+            b = []  # 存储人脸的名字
+            res = self.selectrep()
+            for element in res:
+                rep = self.convert_array(element[1])
+                a.append(rep)
+                b.append(element[0])
+            (A, B) = d
+            Xlist = A.tolist() + a
+            ylist = B.tolist() + b
+            X = np.vstack(Xlist)
+            y = np.array(ylist)
         else:
             (X, y) = d
         param_grid = [
@@ -250,12 +263,10 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
             right = (bb.right(), bb.top())
             if len(self.people) == 0:
                 name = "Unknown"
-            elif len(self.people) == 1:
-                name = self.people[0]
             elif self.svm:
                 newrep = rep.reshape(1, -1)
                 prediction = self.svm.predict_proba(newrep)[0]
-                if np.max(prediction) < 0.5:
+                if np.max(prediction) < 0.919999999:
                     name = "Unknown"
                 else:
                     name = self.svm.predict(newrep)[0]
@@ -284,15 +295,15 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
         plt.close()
         self.write_message(json.dumps(msg))
 
-    # def selectrep(self):
-    #     con = sqlite3.connect('peopleface')
-    #     res = con.execute("SELECT * FROM bestwise").fetchall()
-    #     return res
-    #
-    # def convert_array(self, text):
-    #     out = io.BytesIO(text)
-    #     out.seek(0)
-    #     return np.load(out)
+    def selectrep(self):
+        con = sqlite3.connect('Unknown')
+        res = con.execute("SELECT * FROM bestwise").fetchall()
+        return res
+
+    def convert_array(self, text):
+        out = io.BytesIO(text)
+        out.seek(0)
+        return np.load(out)
 
 
 def main():
