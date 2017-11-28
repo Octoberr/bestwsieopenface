@@ -169,7 +169,8 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
         arryimage = Image.open(io.BytesIO(imgdata))
         # 镜像，应该还不需要镜像
         # rgbFrame = np.zeros((300, 400, 3), dtype=np.uint8)
-        buf = np.asarray(arryimage)
+        buf = np.fliplr(np.asarray(arryimage))
+        # buf = np.asarray(arryimage)
         plt.figure()
         plt.imshow(buf)
         plt.xticks([])
@@ -181,7 +182,7 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
         content = 'data:image/png;base64,' + \
                   urllib.quote(base64.b64encode(imgdata.buf))
         plt.close()
-        rgbFrame = cv2.cvtColor(np.array(arryimage), cv2.COLOR_BGR2RGB)
+        rgbFrame = cv2.cvtColor(np.fliplr(np.array(arryimage)), cv2.COLOR_BGR2RGB)
         # 获取屏幕中所有的脸
         # bbs = align.getAllFaceBoundingBoxes(rgbFrame)
         # 训练时只取一张
