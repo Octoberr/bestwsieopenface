@@ -240,8 +240,8 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
 
         # arryimage = Image.open(io.BytesIO(img))
         # 镜像，应该还不需要镜像,显示需要镜像
-        # buf = np.fliplr(np.asarray(arryimage))
-        buf = np.asarray(img)
+        buf = np.fliplr(np.asarray(img))
+        # buf = np.asarray(img)
         annotatedFrame = np.copy(buf)
         # rgbFrame = np.zeros((300, 400, 3), dtype=np.uint8)
         rgbFrame = cv2.cvtColor(np.array(buf), cv2.COLOR_BGR2RGB)
