@@ -267,7 +267,7 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
             elif self.svm:
                 newrep = rep.reshape(1, -1)
                 prediction = self.svm.predict_proba(newrep)[0]
-                if np.max(prediction) < 0.90999999:
+                if np.max(prediction) < 0.91999999:
                     name = "Unknown"
                 else:
                     name = self.svm.predict(newrep)[0]
