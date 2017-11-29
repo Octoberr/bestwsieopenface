@@ -1,2 +1,4 @@
 # bestwsieopenface
 官网的人脸识别的后台python程序
+openface
+tornado做跨域和websocket的server.
